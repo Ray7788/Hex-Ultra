@@ -40,7 +40,7 @@ def extract_agents(arguments):
     agents = []
     other_args = []
     for argument in arguments:
-        if ("a=" in argument or "-agent" in argument):
+        if ("a=" in argument or "agent=" in argument):
             try:
                 name, cmd = argument.split("=")[1].split(";")
                 agents.append(f'"{argument}"')
