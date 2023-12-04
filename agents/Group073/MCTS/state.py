@@ -1,22 +1,33 @@
 from copy import deepcopy
+from typing import List
 from Board import Board
 from Colour import Colour
+from Move import Move
 
 class State:
     def __init__(self, board:Board, current_player=1):
         self.board = board
-        # 1 for blue, -1 for red
-        self.current_player = current_player
+        self.current_player = current_player    # 1 for blue, -1 for red，default is blue
+        self.is_terminal = self.is_terminal()
+        self.current_value = self.getReward()
+        self.current_round_index = 0
+        self.cumulative_choices = []
 
     def getCurrentPlayer(self):
         return self.current_player
 
-    def getPossibleActions(self):
-        choices = []
+    def get_possible_actions(self):
+        '''
+        Returns the list of all possible moves.
+        '''
+        
+        choices = List[Move] = [] # Stores all moves
+
         for i in range(self.board._board_size):
             for j in range(self.board._board_size):
                 if self.board._tiles[i][j].colour == None:
                     choices.append((i, j))
+
         return choices
     
     def takeAction(self, action):
@@ -26,11 +37,11 @@ class State:
         new_state.current_player = -self.current_player
         return new_state
     
-    def isTerminal(self):
+    def is_terminal(self):
         return self.board.has_ended()
 
     def getReward(self):
-        if not self.isTerminal():
+        if not self.is_terminal():
             return None  # or raise an error, since reward is only for terminal states
 
         winner = self.board.get_winner()  # Hypothetical method to determine the winner
