@@ -1,12 +1,13 @@
 from random import choice
 from time import sleep
 from BasicAgent import NaiveAgent
-from state import State
+from State import State
 from mcts import mcts
 from Board import Board
 
 class MCTSAgent(NaiveAgent):
-    """This class describes the Hex agent using MCTS strategy.
+    """
+    This class describes the Hex agent using MCTS strategy.
     """
     def make_move(self):
         if self.colour == "B" and self.turn_count == 0:
