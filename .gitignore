@@ -3,3 +3,4 @@ src/__pycache__
 .idea/
 agents/Group073/MCTS/__pycache__
 agents/Group073/.DS_Store
+agents/.DS_Store
