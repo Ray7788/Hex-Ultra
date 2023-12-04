@@ -15,23 +15,6 @@ def randomPolicy(state):
     return state.getReward()
 
 
-class treeNode():
-    def __init__(self, state, parent):
-        self.state = state
-        self.isTerminal = state.isTerminal()
-        self.isFullyExpanded = self.isTerminal
-        self.parent = parent
-        self.numVisits = 0
-        self.totalReward = 0
-        self.children = {}
-
-    def __str__(self):
-        s=[]
-        s.append("totalReward: %s"%(self.totalReward))
-        s.append("numVisits: %d"%(self.numVisits))
-        s.append("isTerminal: %s"%(self.isTerminal))
-        s.append("possibleActions: %s"%(self.children.keys()))
-        return "%s: {%s}"%(self.__class__.__name__, ', '.join(s))
 
 class mcts():
     def __init__(self, timeLimit=None, iterationLimit=None, explorationConstant=1 / math.sqrt(2),
@@ -54,7 +37,7 @@ class mcts():
         self.rollout = rolloutPolicy
 
     def search(self, initialState, needDetails=False):
-        self.root = treeNode(initialState, None)
+        self.root = TreeNode(initialState, None)
 
         if self.limitType == 'time':
             timeLimit = time.time() + self.timeLimit / 1000
@@ -91,7 +74,7 @@ class mcts():
         actions = node.state.getPossibleActions()
         for action in actions:
             if action not in node.children:
-                newNode = treeNode(node.state.takeAction(action), node)
+                newNode = TreeNode(node.state.takeAction(action), node)
                 node.children[action] = newNode
                 if len(actions) == len(node.children):
                     node.isFullyExpanded = True
