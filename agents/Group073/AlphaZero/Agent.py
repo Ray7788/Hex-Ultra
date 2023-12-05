@@ -80,7 +80,7 @@ class AlphaZeroAgent:
     define agents controlled by AlphaZero
     """
 
-    def __init__(self, net, colour, opposite_layer=None, board=None, mode="manual"):
+    def __init__(self, net, colour, opposite_layer=None, board=None, mode="manual", device="cuda:0", train=True):
         self.net = net  # AlphaZero net
         self.net.eval()
         # initialize colour of the agent
@@ -96,6 +96,10 @@ class AlphaZeroAgent:
         # initialize the decision of swap
         self.swap = False
         self.mode = mode
+        # initialize device
+        self.device = device
+        # initialize mode: train or test
+        self.train = train
 
     def manual_decision(self):
         # obtain decision from the user
@@ -113,8 +117,8 @@ class AlphaZeroAgent:
             x, y = self.manual_decision()
         else:
             # initialize a MCTS
-            mcts = AlphaZeroMCTS(net=self.net, current_player=self, opposite_player=self.opposite_player, board=self.board, step=step)
-            x, y, distribution = mcts.search(iterations=iterations, returnDistribution=True)
+            mcts = AlphaZeroMCTS(net=self.net, current_player=self, opposite_player=self.opposite_player, board=self.board, step=step, device=self.device)
+            x, y, distribution = mcts.search(iterations=iterations, returnDistribution=True, train=self.train)
         if x is not None and y is not None:
             # update the agent's board
             self.board.drop_stone(x, y, self.returnColour())

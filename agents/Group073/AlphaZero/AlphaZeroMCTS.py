@@ -43,12 +43,12 @@ class Action:
                 self.sub_state = State(current_player=self.opposite_player, opposite_player=self.current_player,
                                        board=board, father_state=self.father_state, father_action=self,
                                        consider_swap=None, end=True,
-                                       winner_colour=winner_colour, isLeaf=True)
+                                       winner_colour=winner_colour, isLeaf=True, isRoot=False)
             else:
                 # obtain the sub-state
                 self.sub_state = State(current_player=self.opposite_player, opposite_player=self.current_player,
                                        board=board, father_state=self.father_state, father_action=self,
-                                       consider_swap=None, isLeaf=True)
+                                       consider_swap=None, isLeaf=True, isRoot=False)
         elif self.swap:
             # this action only swap the two sides
             self.current_player.swap = True
@@ -56,7 +56,7 @@ class Action:
             # obtain the sub-state
             self.sub_state = State(current_player=self.opposite_player, opposite_player=self.current_player,
                                    board=board, father_state=self.father_state, father_action=self, consider_swap=None,
-                                   isLeaf=True)
+                                   isLeaf=True, isRoot=False)
         else:
             # sub-state should consider swap
             winner = board.drop_stone(x=self.x, y=self.y, colour=self.current_player.returnColour())
@@ -69,12 +69,12 @@ class Action:
                 self.sub_state = State(current_player=self.opposite_player, opposite_player=self.current_player,
                                        board=board, father_state=self.father_state, father_action=self,
                                        consider_swap=True, end=True,
-                                       winner_colour=winner_colour, isLeaf=True)
+                                       winner_colour=winner_colour, isLeaf=True, isRoot=False)
             else:
                 # obtain the sub-state
                 self.sub_state = State(current_player=self.opposite_player, opposite_player=self.current_player,
                                        board=board, father_state=self.father_state, father_action=self,
-                                       consider_swap=True, isLeaf=True)
+                                       consider_swap=True, isLeaf=True, isRoot=False)
 
     def _update(self, V):
         """
@@ -93,7 +93,7 @@ class State:
 
     def __init__(self, current_player, opposite_player, board, father_state=None, father_action=None,
                  consider_swap=None, end=False,
-                 winner_colour=None, isLeaf=True):
+                 winner_colour=None, isLeaf=True, isRoot=False):
         self.current_player = current_player  # the player of the state to make an action
         self.opposite_player = opposite_player  # the opposite player
         self.board = board  # current board situation of the state
@@ -104,6 +104,7 @@ class State:
         self.end = end  # indicate if the state is an end of the game and no more action shall be taken
         self.winner_colour = winner_colour  # the colour of the winner at this state when the state is an end
         self.isLeaf = isLeaf  # indicates if the state is a leaf
+        self.isRoot = isRoot    # indicates if the state is the root
         if not end:
             # initialization every actions
             self._initialization()
@@ -146,7 +147,7 @@ class State:
         # return the UCB of an action's leading result according to the current state
         return action.Qv / max(1, action.Nv) + cfg.UCB_C * action.Uv / (1 + action.Nv)
 
-    def search(self, net, device):
+    def search(self, net, device, train=False):
         """
         conduct search for one round
         net: AlphaZero model
@@ -170,6 +171,11 @@ class State:
                     # obtain the policy and value of the node
                     policies, value = net(board_situation)
                     value = value[0, 0].detach().cpu().numpy()
+                    # add noise
+                    if train:
+                        # this operation should be only available for the root
+                        alpha = 0.03 * cfg.BOARD_COL * cfg.BOARD_COL / len(self.actions)
+                        policies = 0.75 * policies + 0.25 * torch.from_numpy(np.random.default_rng().dirichlet(alpha=alpha * np.ones(cfg.BOARD_ROW * cfg.BOARD_COL + 1), size=1)).to(device)
                     xy_policies = policies[0, 0:-1].reshape(cfg.BOARD_ROW,
                                                           cfg.BOARD_COL).detach().cpu()  # policies for dropping stones
                     swap_policies = policies[0, -1:].detach().cpu()  # policies for swap
@@ -192,6 +198,11 @@ class State:
                             action.y, action.x]
                     # backpropagation
                     self.backpropagation(value)
+                # the root should check every actions
+                if self.isRoot:
+                    for action in self.actions:
+                        action.execute()
+                        action.sub_state.search(net, device)
                 self.isLeaf = False
             else:
                 # select any one visited action
@@ -199,7 +210,7 @@ class State:
                 # i the sub-state has not been visited before
                 if action.sub_state is None:
                     action.execute()
-                # move to the sub-state if it is not the end
+                # move to the sub-state
                 action.sub_state.search(net, device)
         else:
             # the node is an end of the game
@@ -246,19 +257,19 @@ class AlphaZeroMCTS:
             # the root should make its sub-state consider swap
             self.root = State(current_player=self.current_player,
                               opposite_player=self.opposite_player,
-                              board=self.board, consider_swap=False, isLeaf=True)
+                              board=self.board, consider_swap=False, isLeaf=True, isRoot=True)
         elif step == 1:
             # the root should consider swap
             self.root = State(current_player=self.current_player,
                               opposite_player=self.opposite_player,
-                              board=self.board, consider_swap=True, isLeaf=True)
+                              board=self.board, consider_swap=True, isLeaf=True, isRoot=True)
         else:
             # without considering swap
             self.root = State(current_player=self.current_player,
                               opposite_player=self.opposite_player,
-                              board=self.board, consider_swap=None, isLeaf=True)
+                              board=self.board, consider_swap=None, isLeaf=True, isRoot=True)
 
-    def search(self, iterations=1000, returnDistribution=True):
+    def search(self, iterations=1000, returnDistribution=True, train=True):
         """
         MCT search
         iterations: the total number of seaches
@@ -266,7 +277,7 @@ class AlphaZeroMCTS:
         return x, y of the position to drop the stone
         """
         for N in range(1, iterations + 1):
-            self.root.search(net=self.net, device=self.device)
+            self.root.search(net=self.net, device=self.device, train=train)
             if self.step == 0 or self.step == 1:
                 # reset the swap of the two agents
                 self.current_player.swap = False

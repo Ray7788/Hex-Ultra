@@ -1,6 +1,6 @@
 # board size
-BOARD_ROW = 11  # the number of rows of the board
-BOARD_COL = 11  # the number of cols of the board
+BOARD_ROW = 5  # the number of rows of the board
+BOARD_COL = 5  # the number of cols of the board
 
 # memory length
 MEMORY_LENGTH = 8  # the number of history rounds seen by AlphaZero
@@ -9,7 +9,7 @@ MEMORY_LENGTH = 8  # the number of history rounds seen by AlphaZero
 UCB_C = 1
 
 # parameters of the model
-MIDDLE_CHANNEL = 128
+MIDDLE_CHANNEL = 64
 
 # temperature
-TAO = 0.7
+TAO = 1.03

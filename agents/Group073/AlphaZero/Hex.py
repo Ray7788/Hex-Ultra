@@ -162,14 +162,17 @@ class HexBoard:
         """
         print the board on the screen
         """
+        RED = "\033[31m"  # red
+        BLUE = "\033[34m"  # blue
+        RESET = "\033[0m"  # reset
         for i in range(self.row):
             rows = []
             for j in range(self.col):
                 if self.board_graph[i][j].occupied:
                     if self.board_graph[i][j].colour == "red":
-                        rows.append("R")
+                        rows.append(RED + "R" + RESET)
                     else:
-                        rows.append("B")
+                        rows.append(BLUE + "B" + RESET)
                 else:
                     rows.append("*")
             rows = ' '.join(rows)
