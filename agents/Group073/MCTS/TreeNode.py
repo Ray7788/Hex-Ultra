@@ -10,8 +10,9 @@ class TreeNode:
         self.action = action
         self.colour = colour
 
-        self.children = {}
+        self.children = {}  # a map from action to TreeNode
         self.isTerminal = state.isTerminal()
+        # TODO: simplify isTerminal and isFullyExpanded
         self.isFullyExpanded = self.isTerminal  # if the node is terminal, no need to expand
         self.numVisits = 0              
         self.totalReward = 0.0
