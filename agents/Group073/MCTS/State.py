@@ -4,39 +4,39 @@ from Board import Board
 from Colour import Colour
 from Move import Move
 
+
 class State:
-    def __init__(self, board:Board, current_player=1):
+    def __init__(self, board: Board, current_player=1):
         self.board = board
-        self.current_player = current_player    # 1 for blue, -1 for red，default is blue
+        self.current_player = current_player  # 1 for blue, -1 for red，default is blue
         self.is_terminal = self.is_terminal()
         self.current_value = self.getReward()
         self.current_round_index = 0
         self.cumulative_choices = []
 
-    def getCurrentPlayer(self):
+    def get_current_player(self):
         return self.current_player
 
-    def get_possible_actions(self):
-        '''
+    def get_possible_actions(self, colour: Colour):
+        """
         Returns the list of all possible moves.
-        '''
-        
-        choices = List[Move] = [] # Stores valid moves
+        """
+        choices = List[Move] = []  # Stores valid moves
 
         for i in range(self.board._board_size):
             for j in range(self.board._board_size):
-                if self.board._tiles[i][j].colour == None:
-                    choices.append((i, j))
+                if self.board._tiles[i][j].colour is None:
+                    choices.append(Move(colour=colour, x=i, y=j))
 
         return choices
-    
+
     def takeAction(self, action):
         playerColour = Colour.BLUE if self.current_player == 1 else Colour.RED
         new_state = deepcopy(self)
         new_state.board._tiles[action[0]][action[1]].colour = playerColour
         new_state.current_player = -self.current_player
         return new_state
-    
+
     def is_terminal(self):
         return self.board.has_ended()
 
@@ -48,4 +48,3 @@ class State:
         if winner is None:
             return 0  # Draw case, if applicable
         return 1 if winner == self.current_player else -1
-    
