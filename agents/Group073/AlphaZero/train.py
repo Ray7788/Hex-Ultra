@@ -84,6 +84,7 @@ ITERATION = 1000000
 LR = 0.0001  # learning rate
 
 if __name__ == '__main__':
+    print("training start")
     start = 0
 
     # initialize queue for model and state transformation
@@ -106,10 +107,11 @@ if __name__ == '__main__':
 
     # initialize the simulation manager
     process_num = 1
-    model_num = 1
+    model_num = 12
     simulation_manager = multiprocessing.Process(target=history_model_manager,
                                                  args=(model_queue, state_queue, process_num, model_num, "cpu",))
     # start the simulation
+    print("start simulation")
     simulation_manager.start()
 
     # set the model to the "train" mode

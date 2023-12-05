@@ -27,7 +27,7 @@ class HexSimulator:
         """
         for step in range(cfg.BOARD_ROW * cfg.BOARD_COL):
             # obtain decision of the current player
-            x, y = self.current_player.make_decision(step, iterations=1000)
+            x, y = self.current_player.make_decision(step, iterations=10)
             if x is None and y is None:
                 print("#### SWAP ####")
                 # player2 choose to swap
@@ -110,7 +110,7 @@ class AlphaZeroSimulator:
         """
         for step in range(cfg.BOARD_ROW * cfg.BOARD_COL):
             # obtain decision of the current player
-            x, y, distribution = self.current_player.make_decision(step, iterations=500)
+            x, y, distribution = self.current_player.make_decision(step, iterations=10)
             # save the state of the step
             self.state_queue.append(GameState(board=self.board, initial_colour=self.current_player.returnColour(),
                                               current_player=self.current_player, distribution=distribution))
@@ -178,7 +178,7 @@ class AlphaZeroTestSimulator:
         """
         for step in range(cfg.BOARD_ROW * cfg.BOARD_COL):
             # obtain decision of the current player
-            x, y, distribution = self.current_player.make_decision(step, iterations=1000)
+            x, y, distribution = self.current_player.make_decision(step, iterations=10)
             # save the state of the step
             self.state_queue.append(GameState(board=self.board, initial_colour=self.current_player.returnColour(),
                                               current_player=self.current_player, distribution=distribution))
