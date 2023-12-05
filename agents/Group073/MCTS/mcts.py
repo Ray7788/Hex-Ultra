@@ -40,7 +40,7 @@ class mcts():
         self.root = TreeNode(initialState, None, None, self.colour)
 
         if self.limitType == 'time':
-            # convert to seconds
+            # convert milliseconds to seconds
             timeLimit = time.time() + self.timeLimit / 1000 
             while time.time() < timeLimit:
                 self.executeRound()
@@ -48,8 +48,13 @@ class mcts():
             for i in range(self.searchLimit):
                 self.executeRound()
 
+        # change the 2nd parameter is_exploration 
         bestChild = self.get_best_child(self.root, 0)
-        action=(action for action, node in self.root.children.items() if node is bestChild).__next__()
+        
+        # choose action based on the best child's node
+        action = (action for action, node in self.root.children.items() if node is bestChild).__next__()
+        
+        # for Debug
         if needDetails:
             return {"action": action, "expectedReward": bestChild.totalReward / bestChild.numVisits}
         else:
