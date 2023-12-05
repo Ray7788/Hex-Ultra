@@ -57,7 +57,7 @@ class mcts():
 
     def executeRound(self):
         """
-        Helper function: execute a selection-expansion-simulation-backpropagation round
+        Helper function for search function: execute a selection-expansion-simulation-backpropagation round
         """
         node = self.selectNode(self.root)
         reward = self.rollout(node.state)

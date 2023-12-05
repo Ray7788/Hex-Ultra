@@ -21,7 +21,7 @@ class State:
         Returns the list of all possible moves.
         '''
         
-        choices = List[Move] = [] # Stores all moves
+        choices = List[Move] = [] # Stores valid moves
 
         for i in range(self.board._board_size):
             for j in range(self.board._board_size):

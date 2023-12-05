@@ -1,5 +1,5 @@
 import random
-from State import State
+from agents.Group073.MCTS.State import State
 
 def randomPolicy(state):
     """This policy chooses uniformly at random from the possible moves in a state"""
