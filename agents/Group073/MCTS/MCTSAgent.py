@@ -31,7 +31,7 @@ class MCTSAgent(NaiveAgent):
             myColour = 1 if self.colour == "B" else -1
             current_state = State(board=b, current_player=myColour)
             # print("current_state---->>>", current_state.board.print_board())
-            searcher = mcts(timeLimit=1000)
+            searcher = mcts(iterationLimit=1000)
             action = searcher.search(initialState=current_state)
             # print("go", action)
             self.s.sendall(bytes(f"{action[0]},{action[1]}\n", "utf-8"))

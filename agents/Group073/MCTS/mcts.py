@@ -3,6 +3,7 @@ from __future__ import division
 import time
 import math
 import random
+import tqdm
 
 
 def randomPolicy(state):
@@ -58,11 +59,17 @@ class mcts():
 
         if self.limitType == 'time':
             timeLimit = time.time() + self.timeLimit / 1000
+            pbar = tqdm.tqdm(total=self.timeLimit / 1000)
             while time.time() < timeLimit:
                 self.executeRound()
+                pbar.update(1)
+            pbar.close()
         else:
+            pbar = tqdm.tqdm(total=self.searchLimit)
             for i in range(self.searchLimit):
                 self.executeRound()
+                pbar.update(1)
+            pbar.close()
 
         bestChild = self.getBestChild(self.root, 0)
         action=(action for action, node in self.root.children.items() if node is bestChild).__next__()

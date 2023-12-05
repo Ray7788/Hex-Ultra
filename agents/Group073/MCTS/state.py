@@ -31,7 +31,7 @@ class State:
 
     def getReward(self):
         if not self.isTerminal():
-            return None  # or raise an error, since reward is only for terminal states
+            return 0  # or raise an error, since reward is only for terminal states
 
         winner = self.board.get_winner()  # Hypothetical method to determine the winner
         if winner is None:

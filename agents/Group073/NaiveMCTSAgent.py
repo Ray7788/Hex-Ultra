@@ -1,0 +1,134 @@
+import socket
+from random import choice
+from time import sleep
+from MCTS2.Hex import HexBoard
+import MCTS2.config as cfg
+from MCTS2.Agent import Agent
+
+
+class MCTSAgent():
+    """This class describes the default Hex agent. It will randomly send a
+    valid move at each turn, and it will choose to swap with a 50% chance.
+    """
+
+    HOST = "127.0.0.1"
+    PORT = 1234
+
+    def __init__(self, board_size=11):
+        self.s = socket.socket(
+            socket.AF_INET, socket.SOCK_STREAM
+        )
+
+        self.s.connect((self.HOST, self.PORT))
+
+
+        self.board_size = board_size
+        self.board = []
+        self.colour = ""
+        self.turn_count = 0
+        self.step = 0
+        
+        
+        # initialize the board
+        self.board = HexBoard(cfg.BOARD_ROW, cfg.BOARD_COL)
+        # initialize the red player (initially red before swap if required)
+        self.player1 = Agent(colour="red", opposite_layer=None, mode="auto", board=self.board)
+        # initialize the blue player (initially blue before swap if required)
+        self.player2 = Agent(colour="blue", opposite_layer=self.player1, mode="auto", board=self.board)
+        self.player1.opposite_player = self.player2
+        # initialize current player to play, red first by default, and opposite player
+        self.current_player = self.player1
+        
+    def run(self):
+        """Reads data until it receives an END message or the socket closes."""
+
+        while True:
+            data = self.s.recv(1024)
+            if not data:
+                break
+            # print(f"{self.colour} {data.decode('utf-8')}", end="")
+            if (self.interpret_data(data)):
+                break
+
+        # print(f"Naive agent {self.colour} terminated")
+
+    def interpret_data(self, data):
+        """Checks the type of message and responds accordingly. Returns True
+        if the game ended, False otherwise.
+        """
+
+        messages = data.decode("utf-8").strip().split("\n")
+        messages = [x.split(";") for x in messages]
+        print(messages)
+        for s in messages:
+            if s[0] == "START":
+                self.board_size = int(s[1])
+                self.colour = s[2]
+                if self.colour == "R":
+                    self.player1.colour = "red"
+                    self.player2.colour = "blue"
+                else:
+                    self.player1.colour = "blue"
+                    self.player2.colour = "red"
+                self.board = HexBoard(self.board_size, self.board_size)
+
+                if self.colour == "R":
+                    self.make_move()
+
+            elif s[0] == "END":
+                return True
+
+            elif s[0] == "CHANGE":
+                if s[3] == "END":
+                    return True
+
+                elif s[1] == "SWAP":
+                    self.colour = self.opp_colour()
+                    self.player1.swap = True
+                    self.player2.swap = True
+                    if s[3] == self.colour:
+                        self.make_move()
+
+                elif s[3] == self.colour:
+                    action = [int(x) for x in s[1].split(",")]
+                    print(action)
+                    self.board.drop_stone(action[0], action[1], self.player2.returnColour())
+                    self.player1.updateBoard(action[0], action[1], self.player2.returnColour())
+                    # self.board[action[0]][action[1]] = self.opp_colour()
+
+                    self.make_move()
+            self.step += 1
+            # self.board.visualization()
+            # print("step: ", self.step)
+
+        return False
+
+    def make_move(self):
+        print("step: ", self.step)
+        """Makes a random move from the available pool of choices. If it can
+        swap, chooses to do so 50% of the time.
+        """
+        # print("update board")
+        # self.player1.board = self.board
+        x, y = self.player1.make_decision(self.step, iterations=500)
+        print("Want", x, y)
+        if x is None and y is None:
+            self.s.sendall(bytes("SWAP\n", "utf-8"))
+        self.board.drop_stone(x, y, self.player1.returnColour())
+        self.player2.updateBoard(x, y, self.player1.returnColour())
+        self.s.sendall(bytes(f"{x},{y}\n", "utf-8"))
+
+    def opp_colour(self):
+        """Returns the char representation of the colour opposite to the
+        current one.
+        """
+        if self.colour == "R":
+            return "B"
+        elif self.colour == "B":
+            return "R"
+        else:
+            return "None"
+        
+if (__name__ == "__main__"):
+    agent = MCTSAgent()
+    agent.run()
