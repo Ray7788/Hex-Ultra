@@ -73,10 +73,10 @@ class mcts():
         select a leaf node in the tree (Tree policy)
         """
         # TODO: simplify isTerminal and isFullyExpanded
-        while not node.isTerminal:
-            if node.isFullyExpanded:
+        while not node.state.has_ended():
+            if node.state.is_terminal:
                 node = self.get_best_child(node, self.explorationConstant)
-            else:
+            elif not node.isFullyExpanded:
                 return self.expand(node)
         return node
 
