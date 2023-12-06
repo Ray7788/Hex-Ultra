@@ -1,6 +1,6 @@
 # board size
-BOARD_ROW = 5  # the number of rows of the board
-BOARD_COL = 5  # the number of cols of the board
+BOARD_ROW = 11  # the number of rows of the board
+BOARD_COL = 11  # the number of cols of the board
 
 # memory length
 MEMORY_LENGTH = 8  # the number of history rounds seen by AlphaZero

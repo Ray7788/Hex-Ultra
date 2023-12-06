@@ -80,7 +80,7 @@ def history_model_manager(model_queue, state_queue, process_num, model_num, devi
 
 # hyper-parameters
 BATCH_SIZE = cfg.BOARD_COL * cfg.BOARD_ROW
-ITERATION = 1000000
+ITERATION = 200001
 LR = 0.0001  # learning rate
 
 if __name__ == '__main__':
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     model.to(train_device)
 
     # initialize the simulation manager
-    process_num = 1
+    process_num = 24
     model_num = 12
     simulation_manager = multiprocessing.Process(target=history_model_manager,
                                                  args=(model_queue, state_queue, process_num, model_num, "cpu",))
@@ -137,6 +137,7 @@ if __name__ == '__main__':
 
     # train
     for iteration in range(start + 1, ITERATION):
+        print("in epoche: ", iteration)
         # get a simulation result
         states = state_queue.get()
 
