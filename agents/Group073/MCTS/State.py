@@ -19,13 +19,14 @@ class State:
 
     def get_possible_actions(self, colour: Colour):
         """
-        Returns the list of all possible moves.
+        Returns the list of all possible moves based on the current state(if it is coloured) of each tile.
         """
         choices = List[Move] = []  # Stores valid moves
 
-        for i in range(self.board._board_size):
-            for j in range(self.board._board_size):
-                if self.board._tiles[i][j].colour is None:
+        for i in range(self.board.get_size()):
+            for j in range(self.board.get_size()):
+                tiles = self.board.get_tiles()
+                if tiles[i][j].colour is None:
                     choices.append(Move(colour=colour, x=i, y=j))
 
         return choices
