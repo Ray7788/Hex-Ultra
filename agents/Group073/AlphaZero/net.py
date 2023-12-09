@@ -146,5 +146,5 @@ if __name__ == "__main__":
     from torchsummary import summary
 
     model = AlphaZeroNet()
-    model.cuda()
-    summary(model, input_size=(2 * cfg.MEMORY_LENGTH + 2, cfg.BOARD_ROW, cfg.BOARD_COL), device='cuda')
+    # model.cuda()
+    summary(model, input_size=(2 * cfg.MEMORY_LENGTH + 2, cfg.BOARD_ROW, cfg.BOARD_COL), device='cpu')

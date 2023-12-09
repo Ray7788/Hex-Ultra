@@ -13,6 +13,7 @@ import random
 import time
 import warnings
 
+multiprocessing.set_start_method('spawn', force=True)
 warnings.filterwarnings("ignore")
 
 
@@ -28,6 +29,7 @@ def returnGame(model1, model2, queue, device):
     game.simulate()
     game.board.visualization()
     queue.put(game.state_queue)
+    time.sleep(5)
 
 
 def history_model_manager(model_queue, state_queue, process_num, model_num, device):
@@ -80,7 +82,7 @@ def history_model_manager(model_queue, state_queue, process_num, model_num, devi
 
 # hyper-parameters
 BATCH_SIZE = cfg.BOARD_COL * cfg.BOARD_ROW
-ITERATION = 200001
+ITERATION = 5
 LR = 0.0001  # learning rate
 
 if __name__ == '__main__':
@@ -106,7 +108,7 @@ if __name__ == '__main__':
     model.to(train_device)
 
     # initialize the simulation manager
-    process_num = 24
+    process_num = 22
     model_num = 12
     simulation_manager = multiprocessing.Process(target=history_model_manager,
                                                  args=(model_queue, state_queue, process_num, model_num, "cpu",))
