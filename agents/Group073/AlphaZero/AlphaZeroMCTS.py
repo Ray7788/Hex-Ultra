@@ -104,7 +104,7 @@ class State:
         self.end = end  # indicate if the state is an end of the game and no more action shall be taken
         self.winner_colour = winner_colour  # the colour of the winner at this state when the state is an end
         self.isLeaf = isLeaf  # indicates if the state is a leaf
-        self.isRoot = isRoot    # indicates if the state is the root
+        self.isRoot = isRoot  # indicates if the state is the root
         if not end:
             # initialization every actions
             self._initialization()
@@ -158,39 +158,26 @@ class State:
                 # expand the node if it is a leaf (including the root) and is not end of the game
                 with torch.no_grad():
                     # obtain the input of the model
-                    board_situation = torch.cat(
-                        [torch.from_numpy(self.board.numpy_board).type(torch.FloatTensor),
-                                torch.zeros(2, cfg.BOARD_ROW, cfg.BOARD_COL)],
-                                dim=0).unsqueeze(0).to(device)
                     if self.current_player.returnColour() == "blue":
-                        # indicator channel for current player's colour: red=0, blue=1
-                        board_situation[0, -2, :, :] = 1
-                    if self.consider_swap:
-                        # indicator for considering swap, 1 to consider swap at this state
-                        board_situation[0, -1, :, :] = 1
+                        # flip the board when the colour is blue
+                        board_situation = torch.from_numpy(np.flip(np.rot90(self.board.numpy_board, axes=(-2, -1)), axis=-1).copy()).type(torch.FloatTensor).unsqueeze(0).to(device)
+                    else:
+                        board_situation = torch.from_numpy(self.board.numpy_board).type(torch.FloatTensor).unsqueeze(0).to(device)
                     # obtain the policy and value of the node
                     policies, value = net(board_situation)
                     value = value[0, 0].detach().cpu().numpy()
-                    # add noise
-                    if train:
-                        # this operation should be only available for the root
-                        alpha = 0.03 * cfg.BOARD_COL * cfg.BOARD_COL / len(self.actions)
-                        policies = 0.75 * policies + 0.25 * torch.from_numpy(np.random.default_rng().dirichlet(alpha=alpha * np.ones(cfg.BOARD_ROW * cfg.BOARD_COL + 1), size=1)).to(device)
-                    xy_policies = policies[0, 0:-1].reshape(cfg.BOARD_ROW,
-                                                          cfg.BOARD_COL).detach().cpu()  # policies for dropping stones
-                    swap_policies = policies[0, -1:].detach().cpu()  # policies for swap
+                    # policies for dropping stones
+                    xy_policies = policies.reshape(cfg.BOARD_ROW, cfg.BOARD_COL).detach().cpu().numpy()
+                    if self.current_player.returnColour() == "blue":
+                        # flip the decision when the colour is blue
+                        xy_policies = np.rot90(np.flip(np.flip(np.rot90(xy_policies, axes=(-2, -1)), axis=-1), axis=-1), k=3, axes=(-2, -1))
+                    xy_policies = torch.from_numpy(xy_policies)
                     # softmax on feasible actions
-                    if self.consider_swap:
-                        softmaxed_policies = F.softmax(
-                            torch.cat([xy_policies[torch.from_numpy(self.board.available_positions)], swap_policies],
-                                      dim=0))
-                        xy_policies[torch.from_numpy(self.board.available_positions)] = softmaxed_policies[: -1]
-                        swap_policies = softmaxed_policies[-1]
-                    else:
-                        xy_policies[torch.from_numpy(self.board.available_positions)] = F.softmax(
+                    xy_policies[torch.from_numpy(self.board.available_positions)] = F.softmax(
                             xy_policies[torch.from_numpy(self.board.available_positions)])
                     xy_policies = xy_policies.numpy()
-                    swap_policies = swap_policies.numpy()
+                    # policies for swap
+                    swap_policies = cfg.SWAP_POLICY
                     # initialize all sub-states of the node by executing all actions of it
                     for action in self.actions:
                         # update U of the sub-state including end of the game
@@ -284,14 +271,16 @@ class AlphaZeroMCTS:
                 self.opposite_player.swap = False
         # print("\n")
         # return the action whose subsequent states give the highest reward to the current player
-        action = max(self.root.actions, key=self.root.returnVisitedTimes)
+        # action = max(self.root.actions, key=self.root.returnVisitedTimes)
+        action = max(self.root.actions, key=self.root.returnUCB)
         decesion_x, decision_y = action.x, action.y
         if not returnDistribution:
             return action.x, action.y, None
         else:
             # obtain visited times of each action
             pi_xy = np.zeros((cfg.BOARD_ROW, cfg.BOARD_COL))
-            pi_swap = 0
+            # pi_xy = - iterations * np.ones((cfg.BOARD_ROW, cfg.BOARD_COL), dtype=np.float32)
+            pi_swap = 0.0
             for action in self.root.actions:
                 if action.x is None and action.y is None:
                     # update pi of swap
@@ -300,7 +289,6 @@ class AlphaZeroMCTS:
                     # update pi for dropping stones
                     pi_xy[action.y, action.x] = self.root.returnVisitedTimes(action)
             pi = np.append(pi_xy.reshape(-1), pi_swap)
-            # apply temperature
             pi = pi ** (1 / cfg.TAO)
             # normalization
             pi = pi / np.sum(pi)

@@ -13,7 +13,6 @@ import random
 import time
 import warnings
 
-multiprocessing.set_start_method('spawn', force=True)
 warnings.filterwarnings("ignore")
 
 
@@ -29,7 +28,6 @@ def returnGame(model1, model2, queue, device):
     game.simulate()
     game.board.visualization()
     queue.put(game.state_queue)
-    time.sleep(5)
 
 
 def history_model_manager(model_queue, state_queue, process_num, model_num, device):
@@ -39,6 +37,7 @@ def history_model_manager(model_queue, state_queue, process_num, model_num, devi
     """
     # initialize model list
     models = []
+    loaded_models = []
     # initialize sub-processes list
     processes = []
     # generate simulation games with multiprocessing
@@ -52,7 +51,7 @@ def history_model_manager(model_queue, state_queue, process_num, model_num, devi
             models.append(new_model)
         except:
             # load a history model with a probability of 1%
-            if random.randint(0, 99) == 1:
+            if random.randint(0, 50) == 1:
                 # initialize existing list of history nets
                 history_models = []
                 for net_name in os.listdir("./module"):
@@ -62,10 +61,12 @@ def history_model_manager(model_queue, state_queue, process_num, model_num, devi
                     new_model = AlphaZeroNet()
                     new_model.load_state_dict(torch.load("./module/" + random.choice(history_models)))
                     new_model.cpu()
-                    models.append(new_model)
+                    loaded_models.append(new_model)
         # remove old models
         if len(models) > model_num:
             models = models[-model_num:]
+        if len(loaded_models) > model_num:
+            loaded_models = loaded_models[-model_num:]
         # remove subprocesses which have finished
         for process in processes[:]:
             if not process.is_alive():
@@ -75,18 +76,17 @@ def history_model_manager(model_queue, state_queue, process_num, model_num, devi
             for _ in range(process_num - len(processes)):
                 # create a new sub-process
                 p = multiprocessing.Process(target=returnGame,
-                                            args=(random.choice(models), random.choice(models), state_queue, device))
+                                            args=(random.choice(models + loaded_models), random.choice(models + loaded_models), state_queue, device))
                 p.start()
                 processes.append(p)
 
 
 # hyper-parameters
 BATCH_SIZE = cfg.BOARD_COL * cfg.BOARD_ROW
-ITERATION = 5
+ITERATION = 1000000
 LR = 0.0001  # learning rate
 
 if __name__ == '__main__':
-    print("training start")
     start = 0
 
     # initialize queue for model and state transformation
@@ -108,12 +108,11 @@ if __name__ == '__main__':
     model.to(train_device)
 
     # initialize the simulation manager
-    process_num = 22
+    process_num = 12
     model_num = 12
     simulation_manager = multiprocessing.Process(target=history_model_manager,
                                                  args=(model_queue, state_queue, process_num, model_num, "cpu",))
     # start the simulation
-    print("start simulation")
     simulation_manager.start()
 
     # set the model to the "train" mode
@@ -139,7 +138,6 @@ if __name__ == '__main__':
 
     # train
     for iteration in range(start + 1, ITERATION):
-        print("in epoche: ", iteration)
         # get a simulation result
         states = state_queue.get()
 

@@ -82,9 +82,7 @@ class HexBoard:
         self.row = row
         self.col = col
         # initialize an empty board
-        self.numpy_board = np.zeros((cfg.MEMORY_LENGTH * 2, row,
-                                     col),
-                                    dtype=np.uint8)  # (upper_half, :, :) for red stones where 1 indicates existence in the latest up_half rounds , otherwise 0, and (lower_half, :, :) for blue stones
+        self.numpy_board = np.zeros((row, col), dtype=np.uint8)
         # initialize a numpy array to store available positions on the board
         self.available_positions = np.ones((cfg.BOARD_ROW, cfg.BOARD_COL), dtype=np.bool_)
         # initialize the board graph
@@ -146,17 +144,13 @@ class HexBoard:
         update the input of the AlphaZero
         """
         # assert the position is not occupied
-        assert self.numpy_board[0, y, x] == 0 and self.numpy_board[
-            cfg.MEMORY_LENGTH, y, x] == 0, f"({x}, {y}) has been occupied!"
+        assert self.numpy_board[y, x] == 0, f"({x}, {y}) has been occupied!"
 
         # update the board
         if colour == "red":
-            self.numpy_board[1:cfg.MEMORY_LENGTH, :, :] = self.numpy_board[0:cfg.MEMORY_LENGTH - 1, :, :]
-            self.numpy_board[0, y, x] = 1
+            self.numpy_board[y, x] = 1
         else:
-            self.numpy_board[cfg.MEMORY_LENGTH + 1:, :, :] = self.numpy_board[
-                                                             cfg.MEMORY_LENGTH: cfg.MEMORY_LENGTH * 2 - 1, :, :]
-            self.numpy_board[cfg.MEMORY_LENGTH, y, x] = 1
+            self.numpy_board[y, x] = 2
 
     def visualization(self):
         """
