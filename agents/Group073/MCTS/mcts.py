@@ -1,29 +1,36 @@
 from __future__ import division
+
+from typing import List
+
+from Board import Board
 from Colour import Colour
 from TreeNode import TreeNode
-from Policy import randomPolicy
 import time
 import math
+from random import choice
 import random
+from copy import deepcopy
+
+from Move import Move
 
 
 class mcts():
-    def __init__(self, 
-                timeLimit=None, 
-                iterationLimit=None, 
-                explorationConstant=1 / math.sqrt(2),
-                rolloutPolicy=randomPolicy,
-                colour: Colour = None
-                ):
-        
-        if timeLimit != None:
-            if iterationLimit != None:
+    def __init__(self,
+                 timeLimit=None,
+                 iterationLimit=None,
+                 exploration_constant=1 / math.sqrt(2),
+                 colour: Colour = None,
+                 board_size: int = 11
+                 ):
+
+        if timeLimit is not None:
+            if iterationLimit is not None:
                 raise ValueError("Cannot have both a time limit and an iteration limit")
             # time taken for each MCTS search in milliseconds
             self.timeLimit = timeLimit
             self.limitType = 'time'
         else:
-            if iterationLimit == None:
+            if iterationLimit is None:
                 raise ValueError("Must have either a time limit or an iteration limit")
             # number of iterations of the search
             if iterationLimit < 1:
@@ -31,69 +38,143 @@ class mcts():
             self.searchLimit = iterationLimit
             self.limitType = 'iterations'
 
+        self.exploration_constant = exploration_constant
         self.colour = colour
-        self.explorationConstant = explorationConstant
-        self.rollout = rolloutPolicy
+        self.board_size = board_size
 
-    def search(self, initialState, needDetails=False):
+    def search(self, initial_state: str) -> [int]:
+        """
+        Search the tree for the best move
+        """
+        # Initialise state from the beginning signal
+        state = Board.from_string(string_input=initial_state, board_size=self.board_size)
         # start at the root node of the tree
-        self.root = TreeNode(initialState, None, None, self.colour)
+        root = TreeNode(state, None, None, self.colour)
 
+        # if the time limit is not set, then run the search for the specified number of iterations
         if self.limitType == 'time':
             # convert milliseconds to seconds
-            timeLimit = time.time() + self.timeLimit / 1000 
-            while time.time() < timeLimit:
-                self.executeRound()
+            time_limit = time.time() + self.timeLimit / 1000
+            while time.time() < time_limit:
+                self.execute_round(root)
         else:
             for i in range(self.searchLimit):
-                self.executeRound()
+                self.execute_round(root)
 
-        # change the 2nd parameter is_exploration 
-        bestChild = self.get_best_child(self.root, 0)
-        
-        # choose action based on the best child's node
-        action = (action for action, node in self.root.children.items() if node is bestChild).__next__()
-        
-        # for Debug
-        if needDetails:
-            return {"action": action, "expectedReward": bestChild.totalReward / bestChild.numVisits}
-        else:
-            return action
+        # change the 2nd parameter to decide if is exploration: 1 or 2
+        best_child = self.get_best_child(root)
 
-    def executeRound(self):
+        # choose action(x, y) based on the best child's node
+        action: [] = [best_child.action.x, best_child.action.y]
+
+        return action
+
+    def execute_round(self, node):
         """
         Helper function for search function: execute a selection-expansion-simulation-backpropagation round
         """
-        node = self.selectNode(self.root)
-        reward = self.rollout(node.state)
-        self.back_propogate(node, reward)
+        next_node = self.select_node(node)  # Tree policy
+        reward = self.rollout_policy(next_node)  # Default policy
+        self.back_propagate(next_node, reward)  # Backup
 
-    def selectNode(self, node):
+    def select_node(self, node: TreeNode) -> TreeNode:
         """
-        select a leaf node in the tree (Tree policy)
+        select a leaf node in the tree for the simulation(Tree policy)
         """
-        # TODO: simplify isTerminal and isFullyExpanded
         while not node.state.has_ended():
-            if node.state.is_terminal:
-                node = self.get_best_child(node, self.explorationConstant)
-            elif not node.isFullyExpanded:
+            valid_actions = node.get_possible_actions(
+                colour=node.colour.opposite(),
+                board_size=self.board_size
+            )
+
+            # If they have the same number, the tree reaches the leaf.
+            if len(valid_actions) != len(node.children):
                 return self.expand(node)
-        return node
+            else:
+                node = self.get_best_child(node)
 
-    def expand(self, node):
-        actions = node.state.get_possible_actions()
-        for action in actions:
-            if action not in node.children:
-                newNode = TreeNode(node.state.takeAction(action), node)
-                node.children[action] = newNode
-                if len(actions) == len(node.children):
-                    node.isFullyExpanded = True
-                return newNode
+            return node
 
-        raise Exception("Should never reach here")
+    def rollout_policy(self, node: TreeNode) -> float:
+        """
+        This policy chooses uniformly at random from the possible moves in a state
+        Also called rollout and simulation, a part of default_policy
+        """
+        while not node.state.has_ended():
+            try:
+                action = choice(node.get_possible_actions(node.colour, self.board_size))
+            except IndexError:
+                raise Exception("Non-terminal state has no possible actions: " + str(node.state))
 
-    def back_propogate(self, node, reward):
-        """ 
+            new_state = deepcopy(node.state)
+            action.move(new_state)
+            v = TreeNode(new_state, node, action, node.colour.opposite())   # opposite player's node
+            # v = TreeNode(v, action, new_state, v.colour.opposite()) original
+
+            return self.get_reward(v)
+
+    def get_reward(self, node: TreeNode) -> float:
+        """
+        Returns the reward for the current state.
+        """
+
+        winner = node.state.get_winner()  # Hypothetical method to determine the winner
+        if winner is None:
+            return 0  # Draw case, if applicable
+
+        return 1.0 if winner == self.colour else -1.0
+
+    def expand(self, node: TreeNode) -> TreeNode:
+        # Find untried actions
+        untried_actions = self.get_untried_actions(node)
+
+        # Randomly choose one action as the next step
+        action_chosen = untried_actions[random.randint(0, len(untried_actions) - 1)]
+
+        # Create a deepcopy of state s
+        s_prime = deepcopy(node.state)
+        # Apply the move
+        action_chosen.move(s_prime)
+
+        v_prime = TreeNode(
+            parent=node,
+            action=action_chosen,
+            state=s_prime,
+            colour=node.colour.opposite()
+        )
+        node.children.append(v_prime)
+
+        # Return the new child
+        return v_prime
+
+    def get_untried_actions(self, node: TreeNode) -> List[Move]:
+        """
+        Helper function for 'expand': Returns all untried actions of a node v.
+        """
+
+        all_possible_actions = node.get_possible_actions(self.colour, self.board_size)  # Get all valid actions from v
+
+        # Check if v has children
+        if len(node.children) != 0:
+            untried_actions: List[Move] = []  # Contains all untried actions
+
+            for action in all_possible_actions:
+                is_tried = False  # Mark this action as untried
+
+                for child in node.children:
+                    if action.x == child.action.x and action.y == child.action.y:
+                        is_tried = True  # Action was already applied
+                        break
+
+                if not is_tried:  # Add untried action to untried list
+                    untried_actions.append(action)
+
+            return untried_actions
+
+        return all_possible_actions
+
+    def back_propagate(self, node: TreeNode, reward):
+        """
         back up the tree from the expanded node and update the node statistics
         """
         while node is not None:
@@ -101,25 +182,25 @@ class mcts():
             node.totalReward += reward
             node = node.parent
 
-    def get_best_child(self, node, explorationValue):
+    def get_best_child(self, node: TreeNode) -> TreeNode:
         """
-        return the child with the highest UCB score
+        return the child with the highest UCB score, if there are multiple nodes with the same score, return a random one
         """
-        bestValue = float("-inf")
-        bestNodes = []
+        best_value = float("-inf")
+        best_nodes = []
 
-        # TODO: check if is_exploaration is needed
-        for child in node.children.values():
-            exploit = node.state.getCurrentPlayer() * child.totalReward / child.numVisits
-            # node.state.getCurrentPlayer() * child.totalReward / child.numVisits + 
-            explore = explorationValue * math.sqrt(2.0 * math.log(node.numVisits) / child.numVisits)
+        children = node.get_children()
+        for child in children:
+            exploit = child.totalReward / child.numVisits
+            # node.state.getCurrentPlayer() * child.totalReward / child.numVisits +
+            explore = self.exploration_constant * math.sqrt((2.0 * math.log(node.numVisits)) / child.numVisits)
             # explorationValue * math.sqrt(2 * math.log(node.numVisits) / child.numVisits)
-            nodeValue = exploit + explore
-            
-            if nodeValue > bestValue:
-                bestValue = nodeValue
-                bestNodes = [child]
-            elif nodeValue == bestValue:
-                bestNodes.append(child)
+            node_value = exploit + 2*explore
 
-        return random.choice(bestNodes)
+            if node_value > best_value:
+                best_value = node_value
+                best_nodes = [child]
+            elif node_value == best_value:
+                best_nodes.append(child)
+
+        return choice(best_nodes)
