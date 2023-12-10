@@ -1,7 +1,7 @@
 from __future__ import division
 
-from typing import List
-
+from Move import Move
+from State import State
 from Board import Board
 from Colour import Colour
 from TreeNode import TreeNode
@@ -10,15 +10,14 @@ import math
 from random import choice
 import random
 from copy import deepcopy
+from typing import List
 
-from Move import Move
 
-
-class mcts():
+class mcts:
     def __init__(self,
                  timeLimit=None,
                  iterationLimit=None,
-                 exploration_constant=1 / math.sqrt(2),
+                 exploration_constant=1 / math.sqrt(2.0),
                  colour: Colour = None,
                  board_size: int = 11
                  ):
@@ -42,15 +41,13 @@ class mcts():
         self.colour = colour
         self.board_size = board_size
 
-    def search(self, initial_state: str) -> [int]:
+    def search(self, initial_state: State) -> [int, int]:
         """
         Search the tree for the best move
         """
-        # Initialise state from the beginning signal
-        state = Board.from_string(string_input=initial_state, board_size=self.board_size)
-        # start at the root node of the tree
-        root = TreeNode(state, None, None, self.colour)
-
+        # start at the root node of the tree, action未定义
+        root = TreeNode(initial_state, None, None, self.colour)
+        # print("A",root.children)
         # if the time limit is not set, then run the search for the specified number of iterations
         if self.limitType == 'time':
             # convert milliseconds to seconds
@@ -69,7 +66,7 @@ class mcts():
 
         return action
 
-    def execute_round(self, node):
+    def execute_round(self, node: TreeNode):
         """
         Helper function for search function: execute a selection-expansion-simulation-backpropagation round
         """
@@ -81,12 +78,12 @@ class mcts():
         """
         select a leaf node in the tree for the simulation(Tree policy)
         """
-        while not node.state.has_ended():
-            valid_actions = node.get_possible_actions(
-                colour=node.colour.opposite(),
-                board_size=self.board_size
-            )
+        while not node.state.is_terminal():
+            valid_actions = node.state.getPossibleActions()
+            # valid_actions = node.state.get_valid_actions(11)
 
+            print("Valid", len(valid_actions))
+            print("Children", len(node.children))
             # If they have the same number, the tree reaches the leaf.
             if len(valid_actions) != len(node.children):
                 return self.expand(node)
@@ -100,78 +97,43 @@ class mcts():
         This policy chooses uniformly at random from the possible moves in a state
         Also called rollout and simulation, a part of default_policy
         """
-        while not node.state.has_ended():
+        # print(type(node.state))
+        while not node.state.is_terminal():
             try:
-                action = choice(node.get_possible_actions(node.colour, self.board_size))
+                # action = choice(node.get_possible_actions(node.colour, self.board_size))
+                action = choice(node.state.getPossibleActions())
             except IndexError:
                 raise Exception("Non-terminal state has no possible actions: " + str(node.state))
 
-            new_state = deepcopy(node.state)
-            action.move(new_state)
-            v = TreeNode(new_state, node, action, node.colour.opposite())   # opposite player's node
-            # v = TreeNode(v, action, new_state, v.colour.opposite()) original
+            new_state = node.state.takeAction()
+            action.move(new_state.board)
+            new_child = TreeNode(new_state, node, action, action.colour)
+            # Colour.opposite(node.colour)
+            return new_child.state.getReward()
 
-            return self.get_reward(v)
+    def expand(self, node: TreeNode):
+        next_player_colour = Colour.opposite(node.colour)
+        actions = node.state.getPossibleActions()
+        # print("-------------")
+        for action in actions:
+            if action not in node.children:
+                # Create a copy of state s
+                s_prime = node.state.takeAction()
+                # Apply the move's colour to board
+                action.move(s_prime.board)
 
-    def get_reward(self, node: TreeNode) -> float:
-        """
-        Returns the reward for the current state.
-        """
+                new_node = TreeNode(
+                    s_prime,
+                    node,
+                    action,
+                    node.colour
+                )
 
-        winner = node.state.get_winner()  # Hypothetical method to determine the winner
-        if winner is None:
-            return 0  # Draw case, if applicable
+                node.children.append(new_node)
 
-        return 1.0 if winner == self.colour else -1.0
+                return new_node
 
-    def expand(self, node: TreeNode) -> TreeNode:
-        # Find untried actions
-        untried_actions = self.get_untried_actions(node)
-
-        # Randomly choose one action as the next step
-        action_chosen = untried_actions[random.randint(0, len(untried_actions) - 1)]
-
-        # Create a deepcopy of state s
-        s_prime = deepcopy(node.state)
-        # Apply the move
-        action_chosen.move(s_prime)
-
-        v_prime = TreeNode(
-            parent=node,
-            action=action_chosen,
-            state=s_prime,
-            colour=node.colour.opposite()
-        )
-        node.children.append(v_prime)
-
-        # Return the new child
-        return v_prime
-
-    def get_untried_actions(self, node: TreeNode) -> List[Move]:
-        """
-        Helper function for 'expand': Returns all untried actions of a node v.
-        """
-
-        all_possible_actions = node.get_possible_actions(self.colour, self.board_size)  # Get all valid actions from v
-
-        # Check if v has children
-        if len(node.children) != 0:
-            untried_actions: List[Move] = []  # Contains all untried actions
-
-            for action in all_possible_actions:
-                is_tried = False  # Mark this action as untried
-
-                for child in node.children:
-                    if action.x == child.action.x and action.y == child.action.y:
-                        is_tried = True  # Action was already applied
-                        break
-
-                if not is_tried:  # Add untried action to untried list
-                    untried_actions.append(action)
-
-            return untried_actions
-
-        return all_possible_actions
+        raise Exception("Should never reach here")
 
     def back_propagate(self, node: TreeNode, reward):
         """
@@ -195,7 +157,7 @@ class mcts():
             # node.state.getCurrentPlayer() * child.totalReward / child.numVisits +
             explore = self.exploration_constant * math.sqrt((2.0 * math.log(node.numVisits)) / child.numVisits)
             # explorationValue * math.sqrt(2 * math.log(node.numVisits) / child.numVisits)
-            node_value = exploit + 2*explore
+            node_value = exploit + explore
 
             if node_value > best_value:
                 best_value = node_value
@@ -203,4 +165,4 @@ class mcts():
             elif node_value == best_value:
                 best_nodes.append(child)
 
-        return choice(best_nodes)
+        return best_nodes[0]

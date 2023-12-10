@@ -8,7 +8,7 @@ from State import State
 
 
 class TreeNode:
-    def __init__(self, state: Board, parent, action: Move, colour: Colour):
+    def __init__(self, state: State, parent, action: Move, colour: Colour):
         self.state = state
         self.parent = parent
         self.action = action
@@ -40,7 +40,7 @@ class TreeNode:
                 #     choices.append(Move(colour=colour, x=i, y=j))
 
         for m in all_moves:
-            tile = self.state.get_tiles()[m.x][m.y]
+            tile = self.state.board.get_tiles()[m.x][m.y]
             if tile.get_colour() is None:
                 choices.append(m)
 
