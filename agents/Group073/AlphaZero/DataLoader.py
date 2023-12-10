@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 import torch
 import config as cfg
+import numpy as np
 
 
 class HexStates(Dataset):
@@ -19,22 +20,17 @@ class HexStates(Dataset):
         """
         game_state = self.state_queue[index]
         # obtain input of the model
-        torch_input = torch.cat(
-
-            [
-                torch.from_numpy(game_state.board.numpy_board).type(torch.FloatTensor),
-                torch.zeros(2, cfg.BOARD_ROW, cfg.BOARD_COL)
-            ],
-
-            dim=0)
         if game_state.initial_colour == "blue":
-            # indicator channel for current player's colour: red=0, blue=1
-            torch_input[-2, :, :] = 1
-        if index == 1:
-            # indicator for considering swap, 1 to consider swap at this state
-            torch_input[-1, :, :] = 1
-        # obtain labels
-        pi = torch.from_numpy(game_state.pi)
+            # flip the board when the colour is blue
+            torch_input = torch.from_numpy(
+                np.flip(np.rot90(game_state.board.numpy_board, axes=(-2, -1)), axis=-1).copy()).type(
+                torch.FloatTensor)
+            # obtain labels
+            pi = torch.from_numpy(np.flip(np.rot90(game_state.pi.reshape(cfg.BOARD_ROW, cfg.BOARD_COL), axes=(-2, -1)), axis=-1).copy().reshape(-1))
+        else:
+            torch_input = torch.from_numpy(game_state.board.numpy_board).type(torch.FloatTensor)
+            # obtain labels
+            pi = torch.from_numpy(game_state.pi)
         reward = game_state.reward
         return torch_input, pi, reward
 

@@ -170,8 +170,8 @@ class State:
                     xy_policies = policies.reshape(cfg.BOARD_ROW, cfg.BOARD_COL).detach().cpu().numpy()
                     if self.current_player.returnColour() == "blue":
                         # flip the decision when the colour is blue
-                        xy_policies = np.rot90(np.flip(np.flip(np.rot90(xy_policies, axes=(-2, -1)), axis=-1), axis=-1), k=3, axes=(-2, -1))
-                    xy_policies = torch.from_numpy(xy_policies)
+                        xy_policies = np.rot90(np.flip(xy_policies, axis=-1), k=3, axes=(-2, -1))
+                    xy_policies = torch.from_numpy(xy_policies.copy())
                     # softmax on feasible actions
                     xy_policies[torch.from_numpy(self.board.available_positions)] = F.softmax(
                             xy_policies[torch.from_numpy(self.board.available_positions)])
@@ -185,11 +185,11 @@ class State:
                             action.y, action.x]
                     # backpropagation
                     self.backpropagation(value)
-                # the root should check every actions
-                if self.isRoot:
-                    for action in self.actions:
-                        action.execute()
-                        action.sub_state.search(net, device)
+                # # the root should check every actions
+                # if self.isRoot:
+                #     for action in self.actions:
+                #         action.execute()
+                #         action.sub_state.search(net, device)
                 self.isLeaf = False
             else:
                 # select any one visited action
@@ -278,17 +278,13 @@ class AlphaZeroMCTS:
             return action.x, action.y, None
         else:
             # obtain visited times of each action
-            pi_xy = np.zeros((cfg.BOARD_ROW, cfg.BOARD_COL))
+            pi = np.zeros((cfg.BOARD_ROW, cfg.BOARD_COL))
             # pi_xy = - iterations * np.ones((cfg.BOARD_ROW, cfg.BOARD_COL), dtype=np.float32)
-            pi_swap = 0.0
             for action in self.root.actions:
-                if action.x is None and action.y is None:
-                    # update pi of swap
-                    pi_swap = self.root.returnVisitedTimes(action)
-                else:
+                if action.x is not None and action.y is not None:
                     # update pi for dropping stones
-                    pi_xy[action.y, action.x] = self.root.returnVisitedTimes(action)
-            pi = np.append(pi_xy.reshape(-1), pi_swap)
+                    pi[action.y, action.x] = self.root.returnVisitedTimes(action)
+            pi = pi.reshape(-1)
             pi = pi ** (1 / cfg.TAO)
             # normalization
             pi = pi / np.sum(pi)
