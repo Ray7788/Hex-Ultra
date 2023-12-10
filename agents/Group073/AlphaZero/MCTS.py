@@ -1,10 +1,10 @@
 import copy
 import numpy as np
 import math
-from Hex import HexBoard
-import config as cfg
+from AlphaZero.Hex import HexBoard
+import AlphaZero.config as cfg
 import random
-from net import StupidAgent
+from AlphaZero.RandomAgent import StupidAgent
 from tqdm import tqdm
 
 

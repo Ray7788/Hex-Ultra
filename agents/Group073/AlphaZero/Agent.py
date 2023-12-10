@@ -1,10 +1,10 @@
-from Hex import HexBoard
-import config as cfg
+from AlphaZero.Hex import HexBoard
+import AlphaZero.config as cfg
 import numpy as np
 import random
 import copy
-from MCTS import MCTS
-from AlphaZeroMCTS import AlphaZeroMCTS
+from AlphaZero.MCTS import MCTS
+from AlphaZero.AlphaZeroMCTS import AlphaZeroMCTS
 
 
 class Agent:

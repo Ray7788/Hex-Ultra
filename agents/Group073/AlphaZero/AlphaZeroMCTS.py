@@ -1,7 +1,7 @@
 import copy
 import numpy as np
-from Hex import HexBoard
-import config as cfg
+from AlphaZero.Hex import HexBoard
+import AlphaZero.config as cfg
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm

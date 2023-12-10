@@ -1,1 +1,2 @@
-python agents/Group888/BestAgent.py
+python3 agents/Group073/TrainedAgent.py
+python3 agents/Group073/NaiveMCTSAgent.py

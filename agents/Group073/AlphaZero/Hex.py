@@ -1,5 +1,5 @@
 import numpy as np
-import config as cfg
+import AlphaZero.config as cfg
 
 
 class Node:
@@ -174,7 +174,7 @@ class HexBoard:
 
 
 if __name__ == "__main__":
-    from net import StupidAgent
+    from RandomAgent import StupidAgent
 
     for _ in range(1):
         player1 = StupidAgent(colour="red")

@@ -1,12 +1,12 @@
 import socket
-from random import choice
-from time import sleep
-from MCTS2.Hex import HexBoard
-import MCTS2.config as cfg
-from MCTS2.Agent import Agent
+from AlphaZero.Hex import HexBoard
+import AlphaZero.config as cfg
+from AlphaZero.Agent import Agent, AlphaZeroAgent
+from AlphaZero.network import HexNetwork
+import torch
 
 
-class MCTSAgent():
+class AZAgent:
     """This class describes the default Hex agent. It will randomly send a
     valid move at each turn, and it will choose to swap with a 50% chance.
     """
@@ -21,24 +21,27 @@ class MCTSAgent():
 
         self.s.connect((self.HOST, self.PORT))
 
-
         self.board_size = board_size
-        self.board = []
         self.colour = ""
         self.turn_count = 0
         self.step = 0
-        
-        
+
+        self.net = HexNetwork()
+        self.net.load_state_dict(
+            torch.load("agents/Group073/AlphaZero/hex11-20180712-3362.policy.pth")['policy']['net'])
+        # print(self.net.keys())
+
         # initialize the board
         self.board = HexBoard(cfg.BOARD_ROW, cfg.BOARD_COL)
         # initialize the red player (initially red before swap if required)
-        self.player1 = Agent(colour="red", opposite_layer=None, mode="auto", board=self.board)
+        self.player1 = AlphaZeroAgent(colour="red", opposite_layer=None, mode="auto", net=self.net,
+                                      device='cpu', train=False)
         # initialize the blue player (initially blue before swap if required)
         self.player2 = Agent(colour="blue", opposite_layer=self.player1, mode="auto", board=self.board)
         self.player1.opposite_player = self.player2
         # initialize current player to play, red first by default, and opposite player
         self.current_player = self.player1
-        
+
     def run(self):
         """Reads data until it receives an END message or the socket closes."""
 
@@ -47,13 +50,14 @@ class MCTSAgent():
             if not data:
                 break
             # print(f"{self.colour} {data.decode('utf-8')}", end="")
-            if (self.interpret_data(data)):
+            if self.interpret_data(data):
                 break
 
         # print(f"Naive agent {self.colour} terminated")
 
     def interpret_data(self, data):
-        """Checks the type of message and responds accordingly. Returns True
+        """
+        Checks the type of message and responds accordingly. Returns True
         if the game ended, False otherwise.
         """
 
@@ -106,24 +110,23 @@ class MCTSAgent():
         return False
 
     def make_move(self):
-        print("step: ", self.step)
-        """Makes a random move from the available pool of choices. If it can
-        swap, chooses to do so 50% of the time.
         """
-        # print("update board")
-        # self.player1.board = self.board
-        y, x = self.player1.make_decision(self.step, iterations=1000)
-        print("Want", x, y)
-        if x is None and y is None:
+        Make move/swap base on network
+        x/y is the coordinate of the move, so x is the column and y is the row
+        """
+        print("step: ", self.step)
+        col, row, distribution = self.player1.make_decision(self.step, iterations=800)
+        print("Want", row, col)
+        if row is None and col is None:
             self.s.sendall(bytes("SWAP\n", "utf-8"))
         self.player1.board.visualization()
-        self.board.drop_stone(y, x, self.player1.returnColour())
+        self.board.drop_stone(col, row, self.player1.returnColour())
         print("dropped")
         self.board.visualization()
-        self.player2.updateBoard(y, x, self.player1.returnColour())
+        self.player2.updateBoard(col, row, self.player1.returnColour())
         print("updated p2")
         self.player2.board.visualization()
-        self.s.sendall(bytes(f"{x},{y}\n", "utf-8"))
+        self.s.sendall(bytes(f"{row},{col}\n", "utf-8"))
 
     def opp_colour(self):
         """Returns the char representation of the colour opposite to the
@@ -138,5 +141,5 @@ class MCTSAgent():
 
 
 if __name__ == "__main__":
-    agent = MCTSAgent()
+    agent = AZAgent()
     agent.run()
