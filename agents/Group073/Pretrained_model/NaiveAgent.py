@@ -1,10 +1,9 @@
-from random import choice
 import socket
-from trained_agent_interactive import InteractiveGame
-from configparser import ConfigParser
+from random import choice
+from time import sleep
 
 
-class TrainedAgent():
+class NaiveAgent():
     """This class describes the default Hex agent. It will randomly send a
     valid move at each turn, and it will choose to swap with a 50% chance.
     """
@@ -16,26 +15,19 @@ class TrainedAgent():
         """A finite-state machine that cycles through waiting for input
         and sending moves.
         """
-
+        
         self._board_size = 0
         self._board = []
         self._colour = ""
         self._turn_count = 1
         self._choices = []
-        self.correct_position = (0, 0)
-        self.last_move = None
-
-        # self.whole_board = []
-        # for i in range(11):
-        #     for j in range(11):
-        #         self.whole_board.append((i, j))
-
+        
         states = {
-            1: TrainedAgent._connect,
-            2: TrainedAgent._wait_start,
-            3: TrainedAgent._make_move,
-            4: TrainedAgent._wait_message,
-            5: TrainedAgent._close
+            1: NaiveAgent._connect,
+            2: NaiveAgent._wait_start,
+            3: NaiveAgent._make_move,
+            4: NaiveAgent._wait_message,
+            5: NaiveAgent._close
         }
 
         res = states[1](self)
@@ -46,9 +38,9 @@ class TrainedAgent():
         """Connects to the socket and jumps to waiting for the start
         message.
         """
-
+        
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._s.connect((TrainedAgent.HOST, TrainedAgent.PORT))
+        self._s.connect((NaiveAgent.HOST, NaiveAgent.PORT))
 
         return 2
 
@@ -56,7 +48,7 @@ class TrainedAgent():
         """Initialises itself when receiving the start message, then
         answers if it is Red or waits if it is Blue.
         """
-
+        
         data = self._s.recv(1024).decode("utf-8").strip().split(";")
         if (data[0] == "START"):
             self._board_size = int(data[1])
@@ -78,24 +70,17 @@ class TrainedAgent():
         """Makes a random valid move. It will choose to swap with
         a coinflip.
         """
-        if self._colour == "B" and self._turn_count == 0:
-            if choice([0, 1]) == 1:
-                self._s.sendall(bytes("SWAP\n", "utf-8"))
-            else:
-                # same as below
-                choices = []
-                for i in range(self._board_size):
-                    for j in range(self._board_size):
-                        if self._board[i][j] == 0:
-                            choices.append((i, j))
-                pos = choice(choices)
-                self._s.sendall(bytes(f"{pos[0]},{pos[1]}\n", "utf-8"))
+        print(self._board)
+        
+        if (self._turn_count == 2 and choice([0, 1]) == 1):
+            msg = "SWAP\n"
         else:
-            our_move_index = ai_agent.play_ai_move()
-            pos = our_move_index // 11, our_move_index % 11
-            self.last_move = pos
-            # must keep
-            self._s.sendall(bytes(f"{pos[0]},{pos[1]}\n", "utf-8"))
+            move = choice(self._choices)
+            print(move)
+            msg = f"{move[0]},{move[1]}\n"
+        
+        self._s.sendall(bytes(msg, "utf-8"))
+
         return 4
 
     def _wait_message(self):
@@ -104,20 +89,18 @@ class TrainedAgent():
         self._turn_count += 1
 
         data = self._s.recv(1024).decode("utf-8").strip().split(";")
-        if data[0] == "END" or data[-1] == "END":
+        if (data[0] == "END" or data[-1] == "END"):
             return 5
         else:
-            if data[1] == "SWAP":
+            x, y = None, None
+            if (data[1] == "SWAP"):
                 self._colour = self.opp_colour()
-                ai_agent.play_move(self.last_move)
             else:
                 x, y = data[1].split(",")
-                self._choices.remove((int(x), int(y)))
-                if data[-1] == self._colour:
-                    opponent_move = int(x), int(y)
-                    ai_agent.play_move(opponent_move)
+                if (data[-1] == self._colour):
+                    self._choices.remove((int(x), int(y)))
 
-            if data[-1] == self._colour:
+            if (data[-1] == self._colour):
                 return 3
 
         return 4
@@ -132,7 +115,7 @@ class TrainedAgent():
         """Returns the char representation of the colour opposite to the
         current one.
         """
-
+        
         if self._colour == "R":
             return "B"
         elif self._colour == "B":
@@ -142,8 +125,5 @@ class TrainedAgent():
 
 
 if (__name__ == "__main__"):
-    agent = TrainedAgent()
-    config = ConfigParser()
-    config.read('config.ini')
-    ai_agent = InteractiveGame(config)
+    agent = NaiveAgent()
     agent.run()

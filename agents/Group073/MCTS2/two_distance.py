@@ -134,6 +134,7 @@ def check_attack_mobility(state, actions):
 
 
 def potential(state):
+    action = None
     while not state.isTerminal():
         try:
             player = state.getCurrentPlayer()
@@ -211,12 +212,7 @@ def potential(state):
                         max_red_actions = [key for key, value in attack_mobility_reds_filtered.items() if value == max_red]
                         blue_values = [attack_mobility_blues_filtered[key] for key in max_red_actions]
                         action = max_red_actions[blue_values.index(min(blue_values))]
-            # print("action",action)
-            # else:
-            #     action = max(potential_board_combine, key=lambda k: potential_board_combine[k])
-            #     print("action",action)
         except IndexError:
             raise Exception("Non-terminal state has no possible actions: " + str(state))
         state = state.takeAction(action)
-    # print("state.getReward()", state.getReward())
     return state.getReward()
