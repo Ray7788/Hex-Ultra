@@ -24,6 +24,7 @@ class TrainedAgent():
         self._choices = []
         self.correct_position = (0, 0)
         self.last_move = None
+        self.opponent_move = None
 
         # self.whole_board = []
         # for i in range(11):
@@ -78,23 +79,23 @@ class TrainedAgent():
         """Makes a random valid move. It will choose to swap with
         a coinflip.
         """
-        if self._colour == "B" and self._turn_count == 0:
-            if choice([0, 1]) == 1:
-                self._s.sendall(bytes("SWAP\n", "utf-8"))
-            else:
-                # same as below
-                choices = []
-                for i in range(self._board_size):
-                    for j in range(self._board_size):
-                        if self._board[i][j] == 0:
-                            choices.append((i, j))
-                pos = choice(choices)
-                self._s.sendall(bytes(f"{pos[0]},{pos[1]}\n", "utf-8"))
+        print('self colour', self._colour)
+        print('self turn c', self._turn_count)
+        if self._turn_count == 2 and choice([0, 1]) == 1:
+            print('add', self.opponent_move)
+            ai_agent.play_move(self.opponent_move)
+            pos = "SWAP\n"
+            self._s.sendall(bytes(pos, "utf-8"))
         else:
+            print(self.opponent_move)
+            if self.opponent_move != None and self._turn_count == 2:
+            	ai_agent.play_move(self.opponent_move)
+            print('1')
             our_move_index = ai_agent.play_ai_move()
             pos = our_move_index // 11, our_move_index % 11
             self.last_move = pos
             # must keep
+            print('our move', pos)
             self._s.sendall(bytes(f"{pos[0]},{pos[1]}\n", "utf-8"))
         return 4
 
@@ -114,8 +115,9 @@ class TrainedAgent():
                 x, y = data[1].split(",")
                 self._choices.remove((int(x), int(y)))
                 if data[-1] == self._colour:
-                    opponent_move = int(x), int(y)
-                    ai_agent.play_move(opponent_move)
+                    self.opponent_move = int(x), int(y)
+                    print('oppo', self.opponent_move)
+                    ai_agent.play_move(self.opponent_move)
 
             if data[-1] == self._colour:
                 return 3
