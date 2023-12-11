@@ -115,10 +115,11 @@ class AZAgent:
         x/y is the coordinate of the move, so x is the column and y is the row
         """
         print("step: ", self.step)
-        col, row, distribution = self.player1.make_decision(self.step, iterations=800)
+        col, row, distribution = self.player1.make_decision(self.step, iterations=200)
         print("Want", row, col)
         if row is None and col is None:
             self.s.sendall(bytes("SWAP\n", "utf-8"))
+            return
         self.player1.board.visualization()
         self.board.drop_stone(col, row, self.player1.returnColour())
         print("dropped")

@@ -116,6 +116,7 @@ class MCTSAgent():
         print("Want", x, y)
         if x is None and y is None:
             self.s.sendall(bytes("SWAP\n", "utf-8"))
+            return
         self.player1.board.visualization()
         self.board.drop_stone(y, x, self.player1.returnColour())
         print("dropped")

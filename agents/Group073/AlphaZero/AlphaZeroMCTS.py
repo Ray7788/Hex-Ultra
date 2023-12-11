@@ -263,7 +263,7 @@ class AlphaZeroMCTS:
         returnDistribution: whether to return pi
         return x, y of the position to drop the stone
         """
-        for N in range(1, iterations + 1):
+        for N in tqdm(range(1, iterations + 1)):
             self.root.search(net=self.net, device=self.device, train=train)
             if self.step == 0 or self.step == 1:
                 # reset the swap of the two agents
