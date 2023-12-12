@@ -12,7 +12,7 @@ UCB_C = 1
 MIDDLE_CHANNEL = 128
 
 # temperature
-TAO = 1  # 1.03
+TAO = 1 # 1.03
 
 # swap policy
-SWAP_POLICY = 0.9
+SWAP_POLICY = 1

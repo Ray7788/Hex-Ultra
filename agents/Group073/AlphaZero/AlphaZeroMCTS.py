@@ -160,7 +160,9 @@ class State:
                     # obtain the input of the model
                     if self.current_player.returnColour() == "blue":
                         # flip the board when the colour is blue
-                        board_situation = torch.from_numpy(np.flip(np.rot90(self.board.numpy_board, axes=(-2, -1)), axis=-1).copy()).type(torch.FloatTensor).unsqueeze(0).to(device)
+                        board_situation = np.flip(np.rot90(self.board.numpy_board, axes=(-2, -1)), axis=-1).copy()
+                        board_situation[board_situation != 0] = 3 - board_situation[board_situation != 0]
+                        board_situation = torch.from_numpy(board_situation).type(torch.FloatTensor).unsqueeze(0).to(device)
                     else:
                         board_situation = torch.from_numpy(self.board.numpy_board).type(torch.FloatTensor).unsqueeze(0).to(device)
                     # obtain the policy and value of the node
@@ -171,6 +173,7 @@ class State:
                     if self.current_player.returnColour() == "blue":
                         # flip the decision when the colour is blue
                         xy_policies = np.rot90(np.flip(xy_policies, axis=-1), k=3, axes=(-2, -1))
+                        # xy_policies = np.rot90(np.flip(np.flip(np.rot90(xy_policies, axes=(-2, -1)), axis=-1), axis=-1), k=3, axes=(-2, -1))
                     xy_policies = torch.from_numpy(xy_policies.copy())
                     # softmax on feasible actions
                     xy_policies[torch.from_numpy(self.board.available_positions)] = F.softmax(
@@ -185,11 +188,11 @@ class State:
                             action.y, action.x]
                     # backpropagation
                     self.backpropagation(value)
-                # # the root should check every actions
-                # if self.isRoot:
-                #     for action in self.actions:
-                #         action.execute()
-                #         action.sub_state.search(net, device)
+                # the root should check every actions
+                if self.isRoot:
+                    for action in self.actions:
+                        action.execute()
+                        action.sub_state.search(net, device)
                 self.isLeaf = False
             else:
                 # select any one visited action
@@ -263,7 +266,7 @@ class AlphaZeroMCTS:
         returnDistribution: whether to return pi
         return x, y of the position to drop the stone
         """
-        for N in tqdm(range(1, iterations + 1)):
+        for N in range(1, iterations + 1):
             self.root.search(net=self.net, device=self.device, train=train)
             if self.step == 0 or self.step == 1:
                 # reset the swap of the two agents
@@ -271,8 +274,8 @@ class AlphaZeroMCTS:
                 self.opposite_player.swap = False
         # print("\n")
         # return the action whose subsequent states give the highest reward to the current player
-        # action = max(self.root.actions, key=self.root.returnVisitedTimes)
-        action = max(self.root.actions, key=self.root.returnUCB)
+        action = max(self.root.actions, key=self.root.returnVisitedTimes)
+        # action = max(self.root.actions, key=self.root.returnUCB)
         decesion_x, decision_y = action.x, action.y
         if not returnDistribution:
             return action.x, action.y, None

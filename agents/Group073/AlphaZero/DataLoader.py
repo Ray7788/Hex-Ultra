@@ -22,9 +22,9 @@ class HexStates(Dataset):
         # obtain input of the model
         if game_state.initial_colour == "blue":
             # flip the board when the colour is blue
-            torch_input = torch.from_numpy(
-                np.flip(np.rot90(game_state.board.numpy_board, axes=(-2, -1)), axis=-1).copy()).type(
-                torch.FloatTensor)
+            board_situation = np.flip(np.rot90(game_state.board.numpy_board, axes=(-2, -1)), axis=-1).copy()
+            board_situation[board_situation != 0] = 3 - board_situation[board_situation != 0]
+            torch_input = torch.from_numpy(board_situation).type(torch.FloatTensor)
             # obtain labels
             pi = torch.from_numpy(np.flip(np.rot90(game_state.pi.reshape(cfg.BOARD_ROW, cfg.BOARD_COL), axes=(-2, -1)), axis=-1).copy().reshape(-1))
         else:

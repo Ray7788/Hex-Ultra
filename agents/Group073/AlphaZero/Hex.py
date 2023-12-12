@@ -159,6 +159,7 @@ class HexBoard:
         RED = "\033[31m"  # red
         BLUE = "\033[34m"  # blue
         RESET = "\033[0m"  # reset
+        print("  " + ' '.join([str(i) for i in range(cfg.BOARD_COL)]))
         for i in range(self.row):
             rows = []
             for j in range(self.col):
@@ -170,11 +171,11 @@ class HexBoard:
                 else:
                     rows.append("*")
             rows = ' '.join(rows)
-            print(" " * i + rows)
+            print(str(i) + " " + " " * i + rows)
 
 
 if __name__ == "__main__":
-    from RandomAgent import StupidAgent
+    from net import StupidAgent
 
     for _ in range(1):
         player1 = StupidAgent(colour="red")

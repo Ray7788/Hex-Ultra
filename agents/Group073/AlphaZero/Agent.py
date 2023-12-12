@@ -115,6 +115,7 @@ class AlphaZeroAgent:
         """
         if self.mode == 'manual':
             x, y = self.manual_decision()
+            distribution = None
         else:
             # initialize a MCTS
             mcts = AlphaZeroMCTS(net=self.net, current_player=self, opposite_player=self.opposite_player, board=self.board, step=step, device=self.device)
