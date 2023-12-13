@@ -43,8 +43,8 @@ for line in lines:
     modified_commands = [f'agent={re.search(r"/([^/]+)$", cmd).group(1)};{cmd}' for cmd in commands]
 
     # 拼接两个命令的两种顺序
-    command1 = f'python3 Hex.py "{modified_commands[0]}" "{modified_commands[1]}"'
-    command2 = f'python3 Hex.py "{modified_commands[1]}" "{modified_commands[0]}"'
+    command1 = f'python3 Hex.py "{modified_commands[0]}" "{modified_commands[1]}" -v'
+    command2 = f'python3 Hex.py "{modified_commands[1]}" "{modified_commands[0]}" -v'
 
     # 执行命令1
     process1 = subprocess.run(command1, shell=True)
