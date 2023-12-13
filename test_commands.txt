@@ -1,0 +1,4 @@
+"agents/TestAgents/joni/joniagent" "python3 agents/Group073/TrainedAgent.py"
+"agents/TestAgents/jimmie/Agentjimmie" "python3 agents/Group073/TrainedAgent.py"
+"agents/TestAgents/bob/bobagent" "python3 agents/Group073/TrainedAgent.py"
+"java -jar agents/TestAgents/rita/rita.jar" "python3 agents/Group073/TrainedAgent.py"
