@@ -11,7 +11,7 @@ class InteractiveGame:
 
     def __init__(self, config):
         self.config = config
-        self.model = load_model('agents/Group073/Pretrained_model/models/11_2w4_2000.pt')
+        self.model = load_model('agents/Group073/Pretrained_model_old_version1/models/11_2w4_2000.pt')
         self.switch_allowed = self.config.getboolean("INTERACTIVE", 'switch', fallback=True)
         self.board = Board(size=self.model.board_size, switch_allowed=self.switch_allowed)
         self.game = MultiHexGame(
