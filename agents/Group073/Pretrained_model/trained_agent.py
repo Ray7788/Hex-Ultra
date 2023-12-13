@@ -19,12 +19,13 @@ class ResNetBlock(nn.Module):
         return out * torch.sigmoid(out)
 
 
-class Conv(nn.Module):
+class OriginalModel(nn.Module):
     def __init__(self, board_size, layers, intermediate_channels, reach):
-        super(Conv, self).__init__()
+        super(OriginalModel, self).__init__()
         self.board_size = board_size
         self.conv = nn.Conv2d(2, intermediate_channels, kernel_size=2 * reach + 1, padding=reach - 1)
-        self.skiplayers = nn.ModuleList([ResNetBlock(intermediate_channels, 1) for idx in range(layers)])
+        # Creates a new instance for each iteration in the range of layers, resulting in distinct instances.
+        self.skiplayers = nn.ModuleList([ResNetBlock(intermediate_channels, 1) for _ in range(layers)])
         self.policyconv = nn.Conv2d(intermediate_channels, 1, kernel_size=2 * reach + 1, padding=reach, bias=False)
         self.bias = nn.Parameter(torch.zeros(board_size ** 2))
 
@@ -38,9 +39,9 @@ class Conv(nn.Module):
         return self.policyconv(x).view(-1, self.board_size ** 2) + self.bias - illegal
 
 
-class RotationWrapperModel(nn.Module):
+class RotatedModel(nn.Module):
     def __init__(self, model):
-        super(RotationWrapperModel, self).__init__()
+        super(RotatedModel, self).__init__()
         self.board_size = model.board_size
         self.internal_model = model
 
@@ -54,7 +55,7 @@ class RotationWrapperModel(nn.Module):
 def model():
     model_file_name = 'agents/Group073/Pretrained_model/models/11_2w4_2000.pt'
     model_info = torch.load(model_file_name, map_location=torch.device('cpu'))
-    model = Conv(
+    model = OriginalModel(
         board_size=model_info['config'].getint('board_size'),
         layers=model_info['config'].getint('layers'),
         intermediate_channels=model_info['config'].getint('intermediate_channels'),
@@ -62,7 +63,7 @@ def model():
     )
 
     if model_info['config'].getboolean('rotation_model'):
-        model = RotationWrapperModel(model)
+        model = RotatedModel(model)
 
     model.load_state_dict(model_info['model_state_dict'])
     model.eval()
