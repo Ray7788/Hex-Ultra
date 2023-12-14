@@ -129,8 +129,8 @@ class HexNetwork(Network):
 
 if __name__ == "__main__":
     model = HexNetwork()
-    azelea = torch.load("./hex11-20180712-3362.policy.pth")
-    model.load_state_dict(azelea['policy']['net'])
+    az = torch.load("./module/hex11-20180712-3362.policy.pth")
+    model.load_state_dict(az['policy']['net'])
 
     # test input
     input = torch.zeros(1, 11, 11).long()

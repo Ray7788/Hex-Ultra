@@ -28,7 +28,7 @@ class AZAgent:
 
         self.net = HexNetwork()
         self.net.load_state_dict(
-            torch.load("agents/Group073/AlphaZero/hex11-20180712-3362.policy.pth")['policy']['net'])
+            torch.load("agents/Group073/AlphaZero/module/hex11-20180712-3362.policy.pth")['policy']['net'])
         # print(self.net.keys())
 
         # initialize the board
@@ -63,7 +63,7 @@ class AZAgent:
 
         messages = data.decode("utf-8").strip().split("\n")
         messages = [x.split(";") for x in messages]
-        print(messages)
+        # print(messages)
         for s in messages:
             if s[0] == "START":
                 self.board_size = int(s[1])
@@ -95,11 +95,11 @@ class AZAgent:
 
                 elif s[3] == self.colour:
                     action = [int(x) for x in s[1].split(",")]
-                    print(action)
+                    # print(action)
                     self.board.drop_stone(action[1], action[0], self.player2.returnColour())
                     self.player1.updateBoard(action[1], action[0], self.player2.returnColour())
                     # please commend out the following line before submission
-                    self.player1.board.visualization()
+                    # self.player1.board.visualization()
                     # self.board[action[0]][action[1]] = self.opp_colour()
 
                     self.make_move()
@@ -114,19 +114,19 @@ class AZAgent:
         Make move/swap base on network
         x/y is the coordinate of the move, so x is the column and y is the row
         """
-        print("step: ", self.step)
+        # print("step: ", self.step)
         col, row, distribution = self.player1.make_decision(self.step, iterations=200)
-        print("Want", row, col)
+        # print("Want", row, col)
         if row is None and col is None:
             self.s.sendall(bytes("SWAP\n", "utf-8"))
             return
-        self.player1.board.visualization()
+        # self.player1.board.visualization()
         self.board.drop_stone(col, row, self.player1.returnColour())
-        print("dropped")
-        self.board.visualization()
+        # print("dropped")
+        # self.board.visualization()
         self.player2.updateBoard(col, row, self.player1.returnColour())
-        print("updated p2")
-        self.player2.board.visualization()
+        # print("updated p2")
+        # self.player2.board.visualization()
         self.s.sendall(bytes(f"{row},{col}\n", "utf-8"))
 
     def opp_colour(self):

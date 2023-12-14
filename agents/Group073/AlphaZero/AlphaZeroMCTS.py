@@ -4,7 +4,7 @@ from AlphaZero.Hex import HexBoard
 import AlphaZero.config as cfg
 import torch
 import torch.nn.functional as F
-from tqdm import tqdm
+# from tqdm import tqdm
 
 
 class Action:

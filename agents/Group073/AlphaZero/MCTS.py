@@ -5,7 +5,7 @@ from AlphaZero.Hex import HexBoard
 import AlphaZero.config as cfg
 import random
 from AlphaZero.RandomAgent import StupidAgent
-from tqdm import tqdm
+# from tqdm import tqdm
 
 
 class Action:
@@ -288,7 +288,7 @@ class MCTS:
         iterations: the total number of seaches
         return x, y of the position to drop the stone
         """
-        for N in tqdm(range(1, iterations + 1)):
+        for N in range(1, iterations + 1):
             self.root.search(N=N, step=self.step)
             if self.step == 0 or self.step == 1:
                 # reset the swap of the two agents

@@ -43,7 +43,7 @@ class NaiveAgent():
 
         messages = data.decode("utf-8").strip().split("\n")
         messages = [x.split(";") for x in messages]
-        print(messages)
+        # print(messages)
         for s in messages:
             if s[0] == "START":
                 self.board_size = int(s[1])
