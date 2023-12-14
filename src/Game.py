@@ -404,15 +404,15 @@ class Game():
                 f"{self._players[colour]['time']},{means[colour]}\n"
             )
 
-            test_csv(
-            self._players[self._player]['name'],
-            Game.ns_to_s(total_time),
-            Game.ns_to_s(means['Total']),
-            self._players[colour]['name'],
-            self._players[colour]['turns'],
-            Game.ns_to_s(self._players[colour]['time']),
-            Game.ns_to_s(means[colour])
-            )
+        test_csv(
+        self._players[self._player]['name'],
+        total_time,
+        means['Total'],
+        self._players[self._player]['name'],
+        self._players[self._player]['turns'],
+        self._players[self._player]['time'],
+        means[self._player]
+        )
 
         self._send_message(verbose_message, protocol_message)
         self._write_log(log_message)
