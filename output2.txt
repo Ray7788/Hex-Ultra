@@ -1,0 +1,40 @@
+Game over. trained_agent.py has won!
+The game took 42 turns and lasted for 27.748s. The mean move time was 0.66s.
+trained_agent.py took 21 turns in 0.139s. Their average move time was 0.006s.
+TrainedAgent.py took 21 turns in 27.595s. Their average move time was 1.314s.
+Game over. trained_agent.py has won!
+The game took 86 turns and lasted for 53.801s. The mean move time was 0.625s.
+trained_agent.py took 43 turns in 0.292s. Their average move time was 0.006s.
+TrainedAgent.py took 43 turns in 53.477s. Their average move time was 1.243s.
+Game over. trained_agent.py has won!
+The game took 64 turns and lasted for 37.781s. The mean move time was 0.59s.
+trained_agent.py took 32 turns in 0.216s. Their average move time was 0.006s.
+TrainedAgent.py took 32 turns in 37.543s. Their average move time was 1.173s.
+Game over. trained_agent.py has won!
+The game took 56 turns and lasted for 36.177s. The mean move time was 0.646s.
+trained_agent.py took 28 turns in 0.188s. Their average move time was 0.006s.
+TrainedAgent.py took 28 turns in 35.972s. Their average move time was 1.284s.
+Game over. trained_agent.py has won!
+The game took 54 turns and lasted for 35.528s. The mean move time was 0.657s.
+trained_agent.py took 27 turns in 0.187s. Their average move time was 0.006s.
+TrainedAgent.py took 27 turns in 35.323s. Their average move time was 1.308s.
+Game over. trained_agent.py has won!
+The game took 66 turns and lasted for 41.502s. The mean move time was 0.628s.
+trained_agent.py took 33 turns in 0.226s. Their average move time was 0.006s.
+TrainedAgent.py took 33 turns in 41.253s. Their average move time was 1.25s.
+Game over. trained_agent.py has won!
+The game took 42 turns and lasted for 28.214s. The mean move time was 0.671s.
+trained_agent.py took 21 turns in 0.138s. Their average move time was 0.006s.
+TrainedAgent.py took 21 turns in 28.062s. Their average move time was 1.336s.
+Game over. trained_agent.py has won!
+The game took 52 turns and lasted for 32.727s. The mean move time was 0.629s.
+trained_agent.py took 26 turns in 0.175s. Their average move time was 0.006s.
+TrainedAgent.py took 26 turns in 32.536s. Their average move time was 1.251s.
+Game over. trained_agent.py has won!
+The game took 62 turns and lasted for 39.915s. The mean move time was 0.643s.
+trained_agent.py took 31 turns in 0.221s. Their average move time was 0.007s.
+TrainedAgent.py took 31 turns in 39.674s. Their average move time was 1.279s.
+Game over. trained_agent.py has won!
+The game took 42 turns and lasted for 27.833s. The mean move time was 0.662s.
+trained_agent.py took 21 turns in 0.146s. Their average move time was 0.006s.
+TrainedAgent.py took 21 turns in 27.673s. Their average move time was 1.317s.
