@@ -404,6 +404,16 @@ class Game():
                 f"{self._players[colour]['time']},{means[colour]}\n"
             )
 
+            test_csv(
+            self._players[self._player]['name'],
+            Game.ns_to_s(total_time),
+            Game.ns_to_s(means['Total']),
+            self._players[colour]['name'],
+            self._players[colour]['turns'],
+            Game.ns_to_s(self._players[colour]['time']),
+            Game.ns_to_s(means[colour])
+            )
+
         self._send_message(verbose_message, protocol_message)
         self._write_log(log_message)
 
@@ -504,6 +514,19 @@ class Game():
         """Method for standardised nanosecond to second conversion."""
         return int(t/10**6)/10**3
 
+def test_csv(
+    game_engine_name,
+    game_engine_total_time,
+    game_engine_mean_time,
+    agent2_name,
+    agent2_turns,
+    agent2_total_time,
+    agent2_mean_time
+):
+    with open('test_raw_data.csv', 'a') as csv_file:
+        csv_file.write(
+            f"{game_engine_name}, {game_engine_total_time}, {game_engine_mean_time}, {agent2_name}, {agent2_turns}, {agent2_total_time}, {agent2_mean_time}\n"
+)
 
 if (__name__ == "__main__"):
     g = Game(board_size=11, verbose=True, mem_eff=True)
