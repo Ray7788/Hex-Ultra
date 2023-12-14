@@ -103,7 +103,7 @@ class TrainedAgent():
         self.logical_board_tensor = torch.zeros([2, 11, 11])
         self.board_tensor = create_border(self.logical_board_tensor)
         self.model = model()
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu")
         self.current_player = 0
 
     def ai_move_coordinate(self, temp=0.1, temp_decay=1.0):
