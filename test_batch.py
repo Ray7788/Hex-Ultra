@@ -86,6 +86,7 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 filename = sys.argv[1]
+
 with open(filename, 'r') as file:
     lines = file.readlines()
 
@@ -104,53 +105,47 @@ for line in lines:
     command2 = f'python3 Hex.py "{modified_commands[1]}" "{modified_commands[0]}" -v'
 
     # 执行命令1
-    process1 = subprocess.run(command1, shell=True, capture_output=True, text=True)
+    process1 = subprocess.run(command1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     # 检查命令1是否成功完成
     if process1.returncode == 0:
         print(f"Command 1 successful: {command1}")
-        # 检查输出是否包含 "Game over"
-        game_over_line1 = next((line for line in process1.stdout.split('\n') if line.startswith("Game over")), None)
-
-        if game_over_line1 is not None:
-            with open('output1.txt', 'a') as output_file:
-                output_file.write(game_over_line1 + '\n')
-                # 查找包含关键词 "took" 的行并写入文件
-                for line in process1.stdout.split('\n'):
-                    if "took" in line:
-                        output_file.write(line + '\n')
-                output_file.write('\n')
-        else:
-            print("Game over not found in command 1 output.")
+        # 获取输出的最后8行
+        last_lines1 = process1.stdout.split('\n')[-8:]
+        
+        # 查找包含关键词 "took" 的行并写入文件
+        for line in last_lines1:
+            if "Game over" in line or "took" in line:
+                with open('output1.txt', 'a') as output_file:
+                    output_file.write(line + '\n')
+            # else:
+            #     print("Game over not found in command 1 output.")
 
         print(START_NEW)
-
-        # 执行命令2
-        process2 = subprocess.run(command2, shell=True, capture_output=True, text=True)
-
-        # 检查命令2是否成功完成
-        if process2.returncode == 0:
-            print(f"Command 2 successful: {command2}")
-            # 检查输出是否包含 "Game over"
-            game_over_line2 = next((line for line in process2.stdout.split('\n') if line.startswith("Game over")), None)
-
-            if game_over_line2 is not None:
-                with open('output2.txt', 'a') as output_file:
-                    output_file.write(game_over_line2 + '\n')
-                    # 查找包含关键词 "took" 的行并写入文件
-                    for line in process2.stdout.split('\n'):
-                        if "took" in line:
-                            output_file.write(line + '\n')
-                    output_file.write('\n')
-                    
-            else:
-                print("Game over not found in command 2 output.")
-        else:
-            print(f"Command 2 failed: {command2}")
-            print(FAILED)
-
     else:
         print(f"Command 1 failed: {command1}")
         print(FAILED)
+    
+    # 执行命令2
+    process2 = subprocess.run(command2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-    print(COMPLETE)
+    # 检查命令2是否成功完成
+    if process2.returncode == 0:
+        print(f"Command 2 successful: {command2}")
+        # 获取输出的最后8行
+        last_lines2 = process2.stdout.split('\n')[-8:]
+        
+        # 查找包含关键词 "took" 的行并写入文件
+        for line in last_lines2:
+            if "Game over" in line or "took" in line:
+                with open('output2.txt', 'a') as output_file:
+                    output_file.write(line + '\n')
+                
+            # else:
+            #     print("Game over not found in command 2 output.")
+        print(START_NEW)
+    else:
+        print(f"Command 2 failed: {command2}")
+        print(FAILED)
+
+print(COMPLETE)
