@@ -129,7 +129,7 @@ class HexNetwork(Network):
 
 if __name__ == "__main__":
     model = HexNetwork()
-    az = torch.load("./module/hex11-20180712-3362.policy.pth")
+    az = torch.load("./module/f-5000.pth")
     model.load_state_dict(az['policy']['net'])
 
     # test input

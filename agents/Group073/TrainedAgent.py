@@ -28,7 +28,7 @@ class AZAgent:
 
         self.net = HexNetwork()
         self.net.load_state_dict(
-            torch.load("agents/Group073/AlphaZero/module/hex11-20180712-3362.policy.pth")['policy']['net'])
+            torch.load("agents/Group073/AlphaZero/module/f-5000.pth")['policy']['net'])
         # print(self.net.keys())
 
         # initialize the board
