@@ -1,4 +1,7 @@
-
+"""
+This network definition is adapted from the AlphaZero-like agent project called azalea on GitHub.
+The original project can be found at: https://github.com/jseppanen/azalea
+"""
 import logging
 
 import torch
