@@ -1,1 +1,1 @@
-python3 Hex.py "a=hex_ultra_agent;python3 agents/Group073/hex_ultra_agent.py" -v
+python agents/Group073/Agent73.py
